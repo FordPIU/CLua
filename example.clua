@@ -1,0 +1,67 @@
+gvar HelloWorld "Hello World"
+
+lfunct add(a, b) return a + b end
+
+var x 10
+var someTable {
+    "Hello",
+    "World",
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+}
+if x > 5 then
+    print "x is greater than 5"
+elseif x < 5 then
+    print "x is less than 5"
+else
+    print "x is equal to 5"
+end
+
+for to 5
+    print "Iteration" :.. i
+end
+
+for k to 5
+    print "Iteration" :.. k
+end
+// :.. would output like: "Iteration: 0"
+
+for pairs someTable
+    print "Key" :.. i .. ", Value" :.. v
+end
+
+for k, v pairs someTable
+    print "Key: " .. k .. ", Value: " .. v
+end
+
+funct test() return end
+// funct
+var teststr "funct"
+
+/*
+    this
+    is
+    a
+    multi
+    line
+    comment
+*/
+
+print "Hi!"
+
+var testincrement 1
+testincrement++
+testincrement+=5
+
+print testincrement
+print HelloWorld
+print teststr
+print add(someTable[5], x)
+print "Hi2"
