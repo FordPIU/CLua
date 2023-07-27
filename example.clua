@@ -1,6 +1,8 @@
 gvar HelloWorld "Hello World"
 
-lfunct add(a, b) return a + b end
+lfunct add(a, b)
+    return a + b
+end
 
 var x 10
 var someTable {
@@ -65,3 +67,6 @@ print HelloWorld
 print teststr
 print add(someTable[5], x)
 print "Hi2"
+
+var bool false
+var bool2 = true
