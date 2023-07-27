@@ -70,3 +70,8 @@ print "Hi2"
 
 var bool false
 var bool2 = true
+
+var test5 = {
+    "test",
+    "test"
+}
