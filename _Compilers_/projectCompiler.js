@@ -41,6 +41,40 @@ function getBuildIntoFromProjectFile(projectFileContent) {
   return buildIntoValue;
 }
 
+function generateFxManifest(buildFilePath) {
+  const lines = fs.readFileSync(projectFilePath, "utf8").split("\n");
+
+  let name = "";
+  let version = "";
+  let description = "";
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith("name")) {
+      name = trimmedLine.split('"')[1];
+    } else if (trimmedLine.startsWith("version")) {
+      version = trimmedLine.split('"')[1];
+    } else if (trimmedLine.startsWith("description")) {
+      description = trimmedLine.split('"')[1];
+    }
+  }
+
+  const fxmanifestContent = `fx_version 'cerulean'
+games { 'gta5' }
+author 'Caleb B. (calebb.) (calebsrealism@gmail.com)'
+description '${description}'
+version '${version}'
+
+client_script 'client.lua'
+server_script 'server.lua'
+shared_script 'shared.lua'`;
+
+  fs.writeFileSync(
+    path.join(buildFilePath, "fxmanifest.lua"),
+    fxmanifestContent
+  );
+}
+
 function processProjectFile(projectFileContent, projectDir) {
   let clientCode = "";
   let serverCode = "";
@@ -112,6 +146,7 @@ function buildProject(buildFolder, clientCode, serverCode, sharedCode) {
   const luaServer = fileCompiler.convertCLuaToLua(serverCode);
   const luaShared = fileCompiler.convertCLuaToLua(sharedCode);
 
+  generateFxManifest(buildFilePath);
   writeToFile(luaClient, path.join(buildFilePath, "client.lua"));
   writeToFile(luaServer, path.join(buildFilePath, "server.lua"));
   writeToFile(luaShared, path.join(buildFilePath, "shared.lua"));
