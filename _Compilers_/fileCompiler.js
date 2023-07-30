@@ -82,17 +82,34 @@ function convertCLuaToLua(cluaCode) {
     "for $1, $2 in pairs($3) do"
   );
 
-  // Convert modern math operators (+=, -=, *=, /=) to their Lua equivalent expressions
-  cluaCode = cluaCode.replace(/(\w+)\s*\+=\s*(\w+)/g, "$1 = $1 + $2");
-  cluaCode = cluaCode.replace(/(\w+)\s*\-=\s*(\w+)/g, "$1 = $1 - $2");
-  cluaCode = cluaCode.replace(/(\w+)\s*\*=\s*(\w+)/g, "$1 = $1 * $2");
-  cluaCode = cluaCode.replace(/(\w+)\s*\/=\s*(\w+)/g, "$1 = $1 / $2");
+  // Convert modern math operators (+=, -=, *=, /=) to their Lua equivalent expressions outside of "return"
+  cluaCode = cluaCode.replace(
+    /return\s+(\w+)\s*\+=\s*(\w+)(?!\s*;)/g,
+    "return $1 + $2"
+  );
+  cluaCode = cluaCode.replace(
+    /return\s+(\w+)\s*\-=\s*(\w+)(?!\s*;)/g,
+    "return $1 - $2"
+  );
+  cluaCode = cluaCode.replace(
+    /return\s+(\w+)\s*\*=\s*(\w+)(?!\s*;)/g,
+    "return $1 * $2"
+  );
+  cluaCode = cluaCode.replace(
+    /return\s+(\w+)\s*\/=\s*(\w+)(?!\s*;)/g,
+    "return $1 / $2"
+  );
 
-  // Convert "++" to Lua equivalent expressions
-  cluaCode = cluaCode.replace(/(\w+)\s*\+\+/g, "$1 = $1 + 1");
+  // Convert modern math operators (+=, -=, *=, /=) to their Lua equivalent expressions inside of non-return statements
+  cluaCode = cluaCode.replace(/(\w+)\s*\+=\s*(\w+)(?!\s*;)/g, "$1 = $1 + $2");
+  cluaCode = cluaCode.replace(/(\w+)\s*\-=\s*(\w+)(?!\s*;)/g, "$1 = $1 - $2");
+  cluaCode = cluaCode.replace(/(\w+)\s*\*=\s*(\w+)(?!\s*;)/g, "$1 = $1 * $2");
+  cluaCode = cluaCode.replace(/(\w+)\s*\/=\s*(\w+)(?!\s*;)/g, "$1 = $1 / $2");
 
-  // Convert "--" to Lua equivalent expressions
-  cluaCode = cluaCode.replace(/(\w+)\s*--/g, "$1 = $1 - 1");
+  // Convert "++", "--", "**" to Lua equivalent expressions
+  cluaCode = cluaCode.replace(/(\w+)\+\+(?=;|\s)/g, "$1 + 1");
+  cluaCode = cluaCode.replace(/(\w+)--(?=;|\s)/g, "$1 - 1");
+  cluaCode = cluaCode.replace(/(\w+)\*\*(?=;|\s)/g, "$1 * 2");
 
   // Remove unneeded line breaks
   cluaCode = cluaCode.replace(/\n\s*\n/g, "\n");
@@ -103,22 +120,6 @@ function convertCLuaToLua(cluaCode) {
   return cluaCode;
 }
 
-// test
-const fs = require("fs");
-fs.readFile("./example.clua", "utf8", (err, data) => {
-  if (err) {
-    console.error("Error reading CLua file:", err);
-  } else {
-    // Convert CLua to Lua
-    const luaCode = convertCLuaToLua(data);
-
-    // Write Lua file
-    fs.writeFile("./example.lua", luaCode, (err) => {
-      if (err) {
-        console.error("Error writing Lua file:", err);
-      } else {
-        console.log("Conversion successful!");
-      }
-    });
-  }
-});
+module.exports = {
+  convertCLuaToLua,
+};

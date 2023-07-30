@@ -1,0 +1,3 @@
+lfunct helloWorld()
+    print "Hello World!"
+end
