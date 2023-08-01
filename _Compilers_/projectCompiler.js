@@ -1,3 +1,15 @@
+/*
+  ╔════════════════════════════════════╗
+  ║   CONFIDENTIAL & COPYRIGHTED CODE  ║
+  ╟────────────────────────────────────╢
+  ║ This code is confidential and      ║
+  ║ protected by copyright. Viewing    ║
+  ║ or accessing this code without a   ║
+  ║ proper Non-Disclosure Agreement    ║
+  ║ (NDA) is strictly prohibited.      ║
+  ╚════════════════════════════════════╝
+*/
+
 const fs = require("fs");
 const path = require("path");
 const { convertCLuaToLua } = require("./fileCompiler");
