@@ -44,54 +44,97 @@ class CLuaFileCompiler {
     return lines.join("\n");
   }
 
-  static convertCLuaToLua(cluaCode) {
-    cluaCode = cluaCode.replace(/\blfunct\b/g, "local function");
-    cluaCode = cluaCode.replace(/\bfunct\b/g, "function");
-    cluaCode = cluaCode.replace(/\bgvar\s+(\w+)\s+([^=\n\s]+)/g, "$1 = $2");
-    cluaCode = cluaCode.replace(
-      /\bvar\s+(\w+)\s+([^=\n\s]+)/g,
-      "local $1 = $2"
-    );
-    cluaCode = cluaCode.replace(/:\.\./g, '.. ": " ..');
-    cluaCode = cluaCode.replace(/\/\/.*$/gm, "");
-    cluaCode = cluaCode.replace(/\/\*[\s\S]*?\*\//g, "");
-    cluaCode = cluaCode.replace(/for to (\d+)/g, "for i = 1, $1 do");
-    cluaCode = cluaCode.replace(/for (\w+) to (\d+)/g, "for $1 = 1, $2 do");
-    cluaCode = cluaCode.replace(/for pairs (\w+)/g, "for i, v in pairs($1) do");
-    cluaCode = cluaCode.replace(
-      /for (\w+), (\w+) pairs (\w+)/g,
-      "for $1, $2 in pairs($3) do"
-    );
+  static convertCLuaToLua(cluaCode, disabledFeatures) {
+    // Local and Global Function Definitions
+    if (!disabledFeatures.includes("funct")) {
+      cluaCode = cluaCode.replace(/\blfunct\b/g, "local function");
+      cluaCode = cluaCode.replace(/\bfunct\b/g, "function");
+    }
 
-    cluaCode = cluaCode.replace(
-      /return\s+(\w+)\s*\+=\s*(\w+)(?!\s*;)/g,
-      "return $1 + $2"
-    );
-    cluaCode = cluaCode.replace(
-      /return\s+(\w+)\s*\-=\s*(\w+)(?!\s*;)/g,
-      "return $1 - $2"
-    );
-    cluaCode = cluaCode.replace(
-      /return\s+(\w+)\s*\*=\s*(\w+)(?!\s*;)/g,
-      "return $1 * $2"
-    );
-    cluaCode = cluaCode.replace(
-      /return\s+(\w+)\s*\/=\s*(\w+)(?!\s*;)/g,
-      "return $1 / $2"
-    );
+    // Local and Global Variable Definitions
+    if (!disabledFeatures.includes("var")) {
+      cluaCode = cluaCode.replace(/\bgvar\s+(\w+)\s+([^=\n\s]+)/g, "$1 = $2");
+      cluaCode = cluaCode.replace(
+        /\bvar\s+(\w+)\s+([^=\n\s]+)/g,
+        "local $1 = $2"
+      );
+    }
 
-    cluaCode = cluaCode.replace(/(\w+)\s*\+=\s*(\w+)(?!\s*;)/g, "$1 = $1 + $2");
-    cluaCode = cluaCode.replace(/(\w+)\s*\-=\s*(\w+)(?!\s*;)/g, "$1 = $1 - $2");
-    cluaCode = cluaCode.replace(/(\w+)\s*\*=\s*(\w+)(?!\s*;)/g, "$1 = $1 * $2");
-    cluaCode = cluaCode.replace(/(\w+)\s*\/=\s*(\w+)(?!\s*;)/g, "$1 = $1 / $2");
+    // Special String Concat Operators
+    if (!disabledFeatures.includes("strconcat")) {
+      cluaCode = cluaCode.replace(/:\.\./g, '.. ": " ..');
+    }
 
-    cluaCode = cluaCode.replace(/(\w+)\+\+(?=;|\s)/g, "$1 + 1");
-    cluaCode = cluaCode.replace(/(\w+)--(?=;|\s)/g, "$1 - 1");
-    cluaCode = cluaCode.replace(/(\w+)\*\*(?=;|\s)/g, "$1 * 2");
+    // Comments
+    if (!disabledFeatures.includes("ccomments")) {
+      cluaCode = cluaCode.replace(/\/\/.*$/gm, "");
+      cluaCode = cluaCode.replace(/\/\*[\s\S]*?\*\//g, "");
+    }
 
+    // Automated Fors
+    if (!disabledFeatures.includes("autofors")) {
+      cluaCode = cluaCode.replace(/for to (\d+)/g, "for i = 1, $1 do");
+      cluaCode = cluaCode.replace(/for (\w+) to (\d+)/g, "for $1 = 1, $2 do");
+      cluaCode = cluaCode.replace(
+        /for pairs (\w+)/g,
+        "for i, v in pairs($1) do"
+      );
+      cluaCode = cluaCode.replace(
+        /for (\w+), (\w+) pairs (\w+)/g,
+        "for $1, $2 in pairs($3) do"
+      );
+    }
+
+    // MATH= C Operators (for returns)
+    if (!disabledFeatures.includes("cmathops")) {
+      cluaCode = cluaCode.replace(
+        /return\s+(\w+)\s*\+=\s*(\w+)(?!\s*;)/g,
+        "return $1 + $2"
+      );
+      cluaCode = cluaCode.replace(
+        /return\s+(\w+)\s*\-=\s*(\w+)(?!\s*;)/g,
+        "return $1 - $2"
+      );
+      cluaCode = cluaCode.replace(
+        /return\s+(\w+)\s*\*=\s*(\w+)(?!\s*;)/g,
+        "return $1 * $2"
+      );
+      cluaCode = cluaCode.replace(
+        /return\s+(\w+)\s*\/=\s*(\w+)(?!\s*;)/g,
+        "return $1 / $2"
+      );
+
+      // MATH= C Operators (for non-returns)
+      cluaCode = cluaCode.replace(
+        /(\w+)\s*\+=\s*(\w+)(?!\s*;)/g,
+        "$1 = $1 + $2"
+      );
+      cluaCode = cluaCode.replace(
+        /(\w+)\s*\-=\s*(\w+)(?!\s*;)/g,
+        "$1 = $1 - $2"
+      );
+      cluaCode = cluaCode.replace(
+        /(\w+)\s*\*=\s*(\w+)(?!\s*;)/g,
+        "$1 = $1 * $2"
+      );
+      cluaCode = cluaCode.replace(
+        /(\w+)\s*\/=\s*(\w+)(?!\s*;)/g,
+        "$1 = $1 / $2"
+      );
+
+      // Dementors
+      cluaCode = cluaCode.replace(/(\w+)\+\+(?=;|\s)/g, "$1 + 1");
+      cluaCode = cluaCode.replace(/(\w+)--(?=;|\s)/g, "$1 - 1");
+      cluaCode = cluaCode.replace(/(\w+)\*\*(?=;|\s)/g, "$1 * 2");
+    }
+
+    // Line Smash
     cluaCode = cluaCode.replace(/\n\s*\n/g, "\n");
 
-    cluaCode = CLuaFileCompiler.addParenthesesToPrint(cluaCode);
+    // Print Fix
+    if (!disabledFeatures.includes("npprint")) {
+      cluaCode = CLuaFileCompiler.addParenthesesToPrint(cluaCode);
+    }
 
     return cluaCode;
   }

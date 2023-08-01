@@ -10,7 +10,15 @@ class CLuaProjectCompiler {
 
   readProjectFile() {
     try {
-      return fs.readFileSync(this.projectFilePath, "utf8");
+      let projectFileContent = fs.readFileSync(this.projectFilePath, "utf8");
+
+      // Remove single-line comments (//)
+      projectFileContent = projectFileContent.replace(/\/\/.*$/gm, "");
+
+      // Remove multi-line comments (/* */)
+      projectFileContent = projectFileContent.replace(/\/\*[\s\S]*?\*\//g, "");
+
+      return projectFileContent;
     } catch (error) {
       console.error("Error reading project file:", error.message);
       return null;
@@ -41,6 +49,39 @@ class CLuaProjectCompiler {
     }
 
     return buildIntoValue;
+  }
+
+  getDisabledCLuaFeatures(projectFileContent) {
+    const disabledFeatures = [];
+
+    const lines = projectFileContent.split("\n");
+    let inDisabledFeaturesSection = false;
+
+    for (const line of lines) {
+      // Remove leading/trailing whitespace and indentation
+      const trimmedLine = line.trim();
+
+      if (trimmedLine === "disable_clua_features") {
+        inDisabledFeaturesSection = true;
+        continue;
+      }
+
+      if (inDisabledFeaturesSection) {
+        // Check for the end of disabled features section
+        if (trimmedLine === "") {
+          inDisabledFeaturesSection = false;
+          break;
+        }
+
+        // Add the disabled feature to the array
+        const feature = trimmedLine.replace(/"/g, "").trim();
+        if (feature) {
+          disabledFeatures.push(feature.toLowerCase());
+        }
+      }
+    }
+
+    return disabledFeatures;
   }
 
   generateFxManifest(buildFilePath, name, version, description) {
@@ -111,9 +152,6 @@ shared_script 'shared.lua'`;
 
       // Append the content of the file to the appropriate code string based on the current section
       if (inClient || inServer || inShared) {
-        // Get the tags for the current file
-        const fileTags = trimmedLine.match(/@(\w+)/g);
-
         // Default the file extension if there is none
         let filePath = this.addCluaExtension(
           trimmedLine.replace(/@(\w+)/g, "")
@@ -132,17 +170,6 @@ shared_script 'shared.lua'`;
 
         // Read that files Content
         let fileContent = fs.readFileSync(filePath, "utf8");
-
-        // Append the tags to the file for the compiler to read
-        if (fileTags != null) {
-          if (fileTags.includes("@obf")) {
-            fileContent += "--@@!!OBFUSCATE!!@@--" + "\n";
-          }
-
-          if (fileTags.includes("@conf")) {
-            fileContent += "--@@!!CONFIDENTIAL!!@@--" + "\n";
-          }
-        }
 
         // Append the files content to the appropiate return string
         if (inClient) {
@@ -179,9 +206,10 @@ shared_script 'shared.lua'`;
       fs.mkdirSync(buildFilePath);
     }
 
-    const luaClient = convertCLuaToLua(clientCode);
-    const luaServer = convertCLuaToLua(serverCode);
-    const luaShared = convertCLuaToLua(sharedCode);
+    const disabledFeatures = this.getDisabledCLuaFeatures(projectFileContent);
+    const luaClient = convertCLuaToLua(clientCode, disabledFeatures);
+    const luaServer = convertCLuaToLua(serverCode, disabledFeatures);
+    const luaShared = convertCLuaToLua(sharedCode, disabledFeatures);
 
     this.generateFxManifest(buildFilePath, name, version, description);
     this.writeToFile(luaClient, path.join(buildFilePath, "client.lua"));
