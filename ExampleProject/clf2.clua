@@ -28,3 +28,4 @@ end
 lfunct self_multiply(a)
     return a**
 end
+

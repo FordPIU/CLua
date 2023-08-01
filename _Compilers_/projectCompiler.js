@@ -18,6 +18,7 @@ class CLuaProjectCompiler {
   }
 
   addCluaExtension(filename) {
+    filename = filename.replace(" ", "");
     if (!path.extname(filename)) {
       return filename + ".clua";
     }
@@ -70,6 +71,18 @@ shared_script 'shared.lua'`;
     let inShared = false;
 
     const lines = projectFileContent.split("\n");
+  }
+
+  processProjectFile(projectFileContent) {
+    let clientCode = "";
+    let serverCode = "";
+    let sharedCode = "";
+
+    let inClient = false;
+    let inServer = false;
+    let inShared = false;
+
+    const lines = projectFileContent.split("\n");
 
     for (const line of lines) {
       // Remove leading/trailing whitespace
@@ -77,35 +90,61 @@ shared_script 'shared.lua'`;
 
       // Check for section headers
       if (trimmedLine === "client") {
-        inClient = true;
         inServer = false;
         inShared = false;
+
+        inClient = true;
         continue;
       } else if (trimmedLine === "server") {
         inClient = false;
-        inServer = true;
         inShared = false;
+
+        inServer = true;
         continue;
       } else if (trimmedLine === "shared") {
         inClient = false;
         inServer = false;
+
         inShared = true;
         continue;
       }
 
       // Append the content of the file to the appropriate code string based on the current section
       if (inClient || inServer || inShared) {
-        let filePath = this.addCluaExtension(trimmedLine);
+        // Get the tags for the current file
+        const fileTags = trimmedLine.match(/@(\w+)/g);
+
+        // Default the file extension if there is none
+        let filePath = this.addCluaExtension(
+          trimmedLine.replace(/@(\w+)/g, "")
+        );
+
+        // Set the File Path
         if (!path.isAbsolute(filePath)) {
           filePath = path.join(this.projectDir, filePath);
         }
 
+        // Ensure the file to read from exists
         if (!fs.existsSync(filePath)) {
           console.error(`File not found: ${filePath}`);
           continue;
         }
 
-        const fileContent = fs.readFileSync(filePath, "utf8");
+        // Read that files Content
+        let fileContent = fs.readFileSync(filePath, "utf8");
+
+        // Append the tags to the file for the compiler to read
+        if (fileTags != null) {
+          if (fileTags.includes("@obf")) {
+            fileContent += "--@@!!OBFUSCATE!!@@--" + "\n";
+          }
+
+          if (fileTags.includes("@conf")) {
+            fileContent += "--@@!!CONFIDENTIAL!!@@--" + "\n";
+          }
+        }
+
+        // Append the files content to the appropiate return string
         if (inClient) {
           clientCode += fileContent + "\n";
         } else if (inServer) {
