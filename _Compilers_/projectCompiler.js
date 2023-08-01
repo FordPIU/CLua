@@ -1,172 +1,180 @@
 const fs = require("fs");
 const path = require("path");
-const fileCompiler = require("./fileCompiler");
-const projectFilePath = "D:/Github/CLua/ExampleProject/ExampleProj.cluaprojx";
+const { convertCLuaToLua } = require("./fileCompiler");
 
-function writeToFile(code, filePath) {
-  fs.writeFileSync(filePath, code);
-}
-
-function addCluaExtension(filename) {
-  if (!path.extname(filename)) {
-    return filename + ".clua";
+class CLuaProjectCompiler {
+  constructor(projectFilePath) {
+    this.projectFilePath = projectFilePath;
+    this.projectDir = path.dirname(projectFilePath);
   }
-  return filename;
-}
 
-function readProjectFile(projectFilePath) {
-  try {
-    return fs.readFileSync(projectFilePath, "utf8");
-  } catch (error) {
-    console.error("Error reading project file:", error.message);
-    return null;
+  readProjectFile() {
+    try {
+      return fs.readFileSync(this.projectFilePath, "utf8");
+    } catch (error) {
+      console.error("Error reading project file:", error.message);
+      return null;
+    }
   }
-}
 
-function getBuildIntoFromProjectFile(projectFileContent) {
-  const lines = projectFileContent.split("\n");
-  let buildIntoValue = null;
+  addCluaExtension(filename) {
+    if (!path.extname(filename)) {
+      return filename + ".clua";
+    }
+    return filename;
+  }
 
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine.startsWith("build_into")) {
-      const parts = trimmedLine.split(" ");
-      if (parts.length === 2) {
-        buildIntoValue = parts[1].trim().replace(/"/g, "");
-        break;
+  getBuildIntoFromProjectFile(projectFileContent) {
+    const lines = projectFileContent.split("\n");
+    let buildIntoValue = null;
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith("build_into")) {
+        const parts = trimmedLine.split(" ");
+        if (parts.length === 2) {
+          buildIntoValue = parts[1].trim().replace(/"/g, "");
+          break;
+        }
       }
     }
+
+    return buildIntoValue;
   }
 
-  return buildIntoValue;
-}
-
-function generateFxManifest(buildFilePath) {
-  const lines = fs.readFileSync(projectFilePath, "utf8").split("\n");
-
-  let name = "";
-  let version = "";
-  let description = "";
-
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine.startsWith("name")) {
-      name = trimmedLine.split('"')[1];
-    } else if (trimmedLine.startsWith("version")) {
-      version = trimmedLine.split('"')[1];
-    } else if (trimmedLine.startsWith("description")) {
-      description = trimmedLine.split('"')[1];
-    }
-  }
-
-  const fxmanifestContent = `fx_version 'cerulean'
+  generateFxManifest(buildFilePath, name, version, description) {
+    const fxmanifestContent = `fx_version 'cerulean'
 games { 'gta5' }
 author 'Caleb B. (calebb.) (calebsrealism@gmail.com)'
 description '${description}'
 version '${version}'
+lua54 'yes'
 
 client_script 'client.lua'
 server_script 'server.lua'
 shared_script 'shared.lua'`;
 
-  fs.writeFileSync(
-    path.join(buildFilePath, "fxmanifest.lua"),
-    fxmanifestContent
-  );
-}
+    fs.writeFileSync(
+      path.join(buildFilePath, "fxmanifest.lua"),
+      fxmanifestContent
+    );
+  }
 
-function processProjectFile(projectFileContent, projectDir) {
-  let clientCode = "";
-  let serverCode = "";
-  let sharedCode = "";
+  processProjectFile(projectFileContent) {
+    let clientCode = "";
+    let serverCode = "";
+    let sharedCode = "";
 
-  let inClient = false;
-  let inServer = false;
-  let inShared = false;
+    let inClient = false;
+    let inServer = false;
+    let inShared = false;
 
-  const lines = projectFileContent.split("\n");
+    const lines = projectFileContent.split("\n");
 
-  for (const line of lines) {
-    // Remove leading/trailing whitespace
-    const trimmedLine = line.trim();
+    for (const line of lines) {
+      // Remove leading/trailing whitespace
+      const trimmedLine = line.trim();
 
-    // Check for section headers
-    if (trimmedLine === "client") {
-      inClient = true;
-      inServer = false;
-      inShared = false;
-      continue;
-    } else if (trimmedLine === "server") {
-      inClient = false;
-      inServer = true;
-      inShared = false;
-      continue;
-    } else if (trimmedLine === "shared") {
-      inClient = false;
-      inServer = false;
-      inShared = true;
-      continue;
-    }
-
-    // Append the content of the file to the appropriate code string based on the current section
-    if (inClient || inServer || inShared) {
-      let filePath = addCluaExtension(trimmedLine);
-      if (!path.isAbsolute(filePath)) {
-        filePath = path.join(projectDir, filePath);
-      }
-
-      if (!fs.existsSync(filePath)) {
-        console.error(`File not found: ${filePath}`);
+      // Check for section headers
+      if (trimmedLine === "client") {
+        inClient = true;
+        inServer = false;
+        inShared = false;
+        continue;
+      } else if (trimmedLine === "server") {
+        inClient = false;
+        inServer = true;
+        inShared = false;
+        continue;
+      } else if (trimmedLine === "shared") {
+        inClient = false;
+        inServer = false;
+        inShared = true;
         continue;
       }
 
-      const fileContent = fs.readFileSync(filePath, "utf8");
-      if (inClient) {
-        clientCode += fileContent + "\n";
-      } else if (inServer) {
-        serverCode += fileContent + "\n";
-      } else if (inShared) {
-        sharedCode += fileContent + "\n";
+      // Append the content of the file to the appropriate code string based on the current section
+      if (inClient || inServer || inShared) {
+        let filePath = this.addCluaExtension(trimmedLine);
+        if (!path.isAbsolute(filePath)) {
+          filePath = path.join(this.projectDir, filePath);
+        }
+
+        if (!fs.existsSync(filePath)) {
+          console.error(`File not found: ${filePath}`);
+          continue;
+        }
+
+        const fileContent = fs.readFileSync(filePath, "utf8");
+        if (inClient) {
+          clientCode += fileContent + "\n";
+        } else if (inServer) {
+          serverCode += fileContent + "\n";
+        } else if (inShared) {
+          sharedCode += fileContent + "\n";
+        }
       }
     }
+
+    return { clientCode, serverCode, sharedCode };
   }
 
-  return { clientCode, serverCode, sharedCode };
-}
+  buildProject() {
+    const projectFileContent = this.readProjectFile();
+    if (!projectFileContent) {
+      console.error("Error: Project file not found or invalid.");
+      return;
+    }
 
-function buildProject(buildFolder, clientCode, serverCode, sharedCode) {
-  const projectPath = path.dirname(projectFilePath);
-  const buildFilePath = path.join(projectPath, buildFolder);
+    const { name, version, description } =
+      this.getProjectInfo(projectFileContent);
 
-  if (!fs.existsSync(buildFilePath)) {
-    fs.mkdirSync(buildFilePath);
+    const { clientCode, serverCode, sharedCode } =
+      this.processProjectFile(projectFileContent);
+
+    const buildIntoFolder =
+      this.getBuildIntoFromProjectFile(projectFileContent);
+    const buildFilePath = path.join(this.projectDir, buildIntoFolder);
+
+    if (!fs.existsSync(buildFilePath)) {
+      fs.mkdirSync(buildFilePath);
+    }
+
+    const luaClient = convertCLuaToLua(clientCode);
+    const luaServer = convertCLuaToLua(serverCode);
+    const luaShared = convertCLuaToLua(sharedCode);
+
+    this.generateFxManifest(buildFilePath, name, version, description);
+    this.writeToFile(luaClient, path.join(buildFilePath, "client.lua"));
+    this.writeToFile(luaServer, path.join(buildFilePath, "server.lua"));
+    this.writeToFile(luaShared, path.join(buildFilePath, "shared.lua"));
+
+    console.log("CLua project has been successfully built into Lua!");
   }
 
-  const luaClient = fileCompiler.convertCLuaToLua(clientCode);
-  const luaServer = fileCompiler.convertCLuaToLua(serverCode);
-  const luaShared = fileCompiler.convertCLuaToLua(sharedCode);
+  writeToFile(code, filePath) {
+    fs.writeFileSync(filePath, code);
+  }
 
-  generateFxManifest(buildFilePath);
-  writeToFile(luaClient, path.join(buildFilePath, "client.lua"));
-  writeToFile(luaServer, path.join(buildFilePath, "server.lua"));
-  writeToFile(luaShared, path.join(buildFilePath, "shared.lua"));
+  getProjectInfo(projectFileContent) {
+    const lines = projectFileContent.split("\n");
+    let name = "";
+    let version = "";
+    let description = "";
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith("name")) {
+        name = trimmedLine.split('"')[1];
+      } else if (trimmedLine.startsWith("version")) {
+        version = trimmedLine.split('"')[1];
+      } else if (trimmedLine.startsWith("description")) {
+        description = trimmedLine.split('"')[1];
+      }
+    }
+
+    return { name, version, description };
+  }
 }
 
-// Read the project file
-const projectFileContent = readProjectFile(projectFilePath);
-if (!projectFileContent) {
-  process.exit(1);
-}
-
-// Get the project directory
-const projectDir = path.dirname(projectFilePath);
-
-// Call the function with the sample CLua Project File
-const { clientCode, serverCode, sharedCode } = processProjectFile(
-  projectFileContent,
-  projectDir
-);
-
-// Get the build_into value
-const buildIntoFolder = getBuildIntoFromProjectFile(projectFileContent);
-buildProject(buildIntoFolder, clientCode, serverCode, sharedCode);
+module.exports = CLuaProjectCompiler;
