@@ -24,10 +24,9 @@ The Receiving Party shall use the Confidential Information solely for the purpos
 
 5. Exceptions
 The obligations of confidentiality and non-disclosure under this Agreement shall not apply to information that:
-   a) Is or becomes publicly available through no fault of the Receiving Party;
-   b) Was already known to the Receiving Party at the time of disclosure;
-   c) Is independently developed by the Receiving Party without reference to the Confidential Information; or
-   d) Is required to be disclosed by law, regulation, or court order, provided that the Receiving Party gives the Disclosing Party prompt written notice of such requirement to allow the Disclosing Party to seek a protective order or other appropriate remedy.
+   a) Becomes publicly available by the Disclosing Party;
+   b) Is independently developed by the Receiving Party without reference to the Confidential Information; or
+   c) Is required to be disclosed by law, regulation, or court order, provided that the Receiving Party gives the Disclosing Party prompt written notice of such requirement to allow the Disclosing Party to seek a protective order or other appropriate remedy.
 
 6. Duration of Confidentiality
 The receiving party's obligations under this NDA shall continue indefinitely until such time as the disclosed information becomes publicly available through legitimate means and not as a result of any action or disclosure by any other party or source. The receiving party shall be responsible for ensuring that they do not disclose any non-public information received under this NDA, even after the termination of any business relationship between the parties or this NDA.
