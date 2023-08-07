@@ -1,6 +1,3 @@
-local function helloWorld()
-    print( "Hello World!")
-end
 local function add(a, b)
     return a+b
 end
@@ -25,3 +22,4 @@ end
 local function self_multiply(a)
     return a * 2
 end
+

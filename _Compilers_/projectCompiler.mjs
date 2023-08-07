@@ -12,17 +12,20 @@
 
 import { error } from "console";
 import fs from "fs";
+import path from "path";
+import { convertCLuaToLua } from "./fileCompiler.mjs";
 import { removeComments } from "./utils.mjs";
 
 export class ProjectCompiler {
   projectFileText;
   projectFileLines;
   parsedProjectFile;
+  projectFilePath;
 
   constructor(filePath) {
     // Check that the file path exists
     if (!fs.existsSync(filePath)) {
-      throw new error("Invalid File Path!");
+      console.error("Invalid File Path!");
     }
 
     // Read file from path
@@ -33,6 +36,9 @@ export class ProjectCompiler {
 
     // Set Lines
     this.projectFileLines = this.projectFileText.split("\n");
+
+    // Set Path
+    this.projectFilePath = filePath;
   }
 
   /**
@@ -52,15 +58,9 @@ description '${this.parsedProjectFile.metadata.desc}'
 version '${this.parsedProjectFile.metadata.version}'
 lua54 'yes'
 
-client_script {
-
-}
-server_script {
-
-}
-shared_script {
-
-}`;
+__CLIENT__
+__SERVER__
+__SHARED__`;
 
     // Build the luaScriptFiles arrays
     for (const section in this.parsedProjectFile.files) {
@@ -79,10 +79,86 @@ shared_script {
       const fileList = luaScriptFiles[section];
       const fileListString = fileList.join(",\n  ");
       fxmanifestContent = fxmanifestContent.replace(
-        new RegExp(`${section}_script \\{\\s*}`),
-        `${section}_script {\n  ${fileListString}\n}`
+        `__${section.toUpperCase()}__`,
+        `${section.toLowerCase()}_scripts {
+  ${fileListString}
+}`
       );
     }
+
+    // Build the Files
+    let builtFiles = [];
+    for (const section in this.parsedProjectFile.files) {
+      for (const [cFileName, nFileName] of Object.entries(
+        this.parsedProjectFile.files[section]
+      )) {
+        // File Path
+        let filePath;
+        if (!path.isAbsolute(cFileName)) {
+          filePath = path.join(path.dirname(this.projectFilePath), cFileName);
+        } else {
+          filePath = cFileName;
+        }
+
+        // File Extension
+        if (!path.extname(filePath)) {
+          filePath += ".clua";
+        }
+
+        // Ensure file exists
+        if (!fs.existsSync(filePath)) {
+          console.error(`File not found: ${filePath}`);
+        }
+
+        // Read the File
+        let cLuaFile = fs.readFileSync(filePath, "utf-8");
+
+        // Ensure built Files [ File Name ]
+        if (!builtFiles[nFileName]) {
+          builtFiles[nFileName] = "";
+        }
+
+        // Write
+        builtFiles[nFileName] +=
+          convertCLuaToLua(cLuaFile, this.parsedProjectFile.feature_kill) +
+          "\n";
+      }
+    }
+
+    for (const [fileName, fileContent] of Object.entries(builtFiles)) {
+      // File Path
+      let filePath;
+      if (!path.isAbsolute(fileName)) {
+        filePath = path.join(
+          path.dirname(this.projectFilePath) +
+            "/" +
+            (this.parsedProjectFile.metadata.build_into || "build"),
+          fileName + ".lua"
+        );
+      } else {
+        filePath = fileName;
+      }
+
+      // Ensure folder exists
+      if (!fs.existsSync(path.dirname(filePath))) {
+        fs.mkdirSync(path.dirname(filePath));
+      }
+
+      // Write File
+      fs.writeFileSync(filePath, fileContent, "utf-8");
+    }
+
+    // Write Manifest
+    fs.writeFileSync(
+      path.join(
+        path.dirname(this.projectFilePath) +
+          "/" +
+          (this.parsedProjectFile.metadata.build_into || "build") +
+          "/fxmanifest.lua"
+      ),
+      fxmanifestContent,
+      "utf-8"
+    );
   }
 
   /**
@@ -112,7 +188,7 @@ shared_script {
 
     // Feature Kill
     this.parsedProjectFile.feature_kill =
-      this.getSimpleArrayData("disable_clua_features") || {};
+      this.getSimpleArrayData("disable_clua_features") || [];
 
     // Plugins
     this.parsedProjectFile.plugins = this.getSimpleArrayData("plugins") || {};
@@ -135,8 +211,6 @@ shared_script {
       this.getSimpleArrayFileData("server") || {};
     this.parsedProjectFile.files.shared =
       this.getSimpleArrayFileData("shared") || {};
-
-    console.log(this.parsedProjectFile);
   }
 
   /**

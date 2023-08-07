@@ -6,5 +6,5 @@ build_into "build"
 
 // Defining Client Files
 client
-    clf1
+    clf1 to utils
     clf2
