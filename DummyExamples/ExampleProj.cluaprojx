@@ -52,16 +52,16 @@ assets
 
 // Defining Client Files
 client
-    client_file1
-    client_file2
+    client_file1 to c_main
+    client_file2 to c_backup
 
 // Defining Server Files
 server
-    server_file1
+    server_file1 to s_main
 
 // Defining Shared Files
 shared
-    shared_file1
+    shared_file1 to shared_main
     shared_file2
 
 // Package: TierA

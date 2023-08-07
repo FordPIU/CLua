@@ -1,4 +1,3 @@
-const path = require("path");
 const CLuaProjectCompiler = require("./projectCompiler");
 
 // Get the absolute path of the project file
