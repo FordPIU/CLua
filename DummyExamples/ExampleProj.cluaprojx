@@ -14,7 +14,7 @@ disable_clua_features
   Imports will inject code into the project upon compile time, adding in extra functions, variables, etc.
   An import could  be, say, "ThreadingExtended", where the capabilities of FiveMs multi-threading are extended with more functions.
 
-  Plugins inject into the compiler, and the code (but only if nescessary). An example of a plugin would be "C++ Classes", where you can have c++ style classes, and the compiler
+  Plugins inject into the compiler, and the code (but only if necessary). An example of a plugin would be "C++ Classes", where you can have c++ style classes, and the compiler
   with this plugin auto converts them into lua classes/tables.
 
   Imports inject into the code files
@@ -27,15 +27,9 @@ plugins
     coolerCompiler
     bitcoinMiningCompiler
 
-// Importing Packages with Versioning and Conditional Sections
-import "amazingFunctions"
-    disable_features // defines that there are multiple features of this import to disable.
-      "feature3"
-      "feature7"
-
-import "coolVariables"
-    required_version 2.0 // defines that a specific version of this import is required.
-    disable_feature "feature1" // defines that only 1 feature of this import is to be disabled.
+imports
+    amazingFunctions
+    coolVariables
 
 // Environment Variables
 env
@@ -58,23 +52,12 @@ client
 // Defining Server Files
 server
     server_file1 to s_main
+    server_file2
+    server_file3
+    server_file4
+    server_file5 to s_main2
 
 // Defining Shared Files
 shared
     shared_file1 to shared_main
     shared_file2
-
-// Package: TierA
-package "TierA"
-    override version 1.5 // overrides the project version for the compiled fivem resource, for this version of the fivem resource.
-    remove tierA_file1 // skips this file for compiling into the fivem resource.
-    override tierA_file2 with substitute_tierA_file2 // overrides this file with this file for the fivem resource.
-
-    if env->USE_FEATURE1 // conditional statements
-      enable_feature(PackageB->feature1.enable) // re-enables disabled features
-
-// Package: TierB
-package "TierB"
-    override tierB_file1 with substitute_tierB_file1
-    remove tierB_file3
-    override env->DEBUG with false // you can override enviromental variables, using "->" as the "." to navigate into the array.

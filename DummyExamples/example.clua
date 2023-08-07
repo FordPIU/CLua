@@ -75,3 +75,5 @@ var test5 = {
     "test",
     "test"
 }
+
+print "/* Hi there */"
