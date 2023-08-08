@@ -197,69 +197,7 @@ __SHARED__`;
     );
 
     // End of the Build Process!
-    // Calculate Time to Compile
-    let buildEnd = new Date().getTime();
-    let buildTime = buildEnd - buildStart;
-    let buildPrint = getRandomBuildPrint(buildTime);
-
-    // Calculate total memory used
-    let totalMemory = 0;
-    for (const [, fileContent] of Object.entries(builtFiles)) {
-      totalMemory += Buffer.byteLength(fileContent, "utf-8");
-    }
-
-    // Calculate the total number of lines of code & functions
-    let totalLinesOfCode = 0;
-    let totalFunctions = 0;
-    for (const [, fileContent] of Object.entries(builtFiles)) {
-      let lines = fileContent.split("\n");
-      totalLinesOfCode += lines.length;
-      totalFunctions += lines.filter((line) =>
-        line.trim().includes("funct")
-      ).length;
-    }
-
-    // End of Build Logs
-    console.log(chalk.bold("\nBuild Summary"));
-    console.log(chalk.gray("=============================="));
-    console.log(
-      chalk.blue.bold(`Project: ${this.parsedProjectFile.metadata.name}`)
-    );
-    console.log(
-      chalk.blue.bold(`Version: ${this.parsedProjectFile.metadata.version}`)
-    );
-    console.log(chalk.blue.bold(`Build Time: ${buildTime}ms || ${buildPrint}`));
-    console.log(
-      chalk.blue.bold(`Build Memory: ${formatMemorySize(totalMemory)}`)
-    );
-    console.log(
-      chalk.blue.bold(`Total Build Lines of Code: ${totalLinesOfCode}`)
-    );
-    console.log(
-      chalk.blue.bold(`Total Build Number of Functions: ${totalFunctions}`)
-    );
-
-    console.log(chalk.bold("\nBuilt Files:"));
-    console.log(chalk.gray("-------------------------------"));
-    for (const [fileName, fileContent] of Object.entries(builtFiles)) {
-      // Calculate File Size
-      let memorySize = formatMemorySize(
-        Buffer.byteLength(fileContent, "utf-8")
-      );
-
-      // Calculate the number of lines & functions
-      let lines = fileContent.split("\n");
-      let linesOfCode = lines.length;
-      let numFunctions = lines.filter((line) =>
-        line.trim().includes("funct")
-      ).length;
-
-      // Print Out
-      console.log(chalk.green(`   ${fileName}.lua`));
-      console.log(chalk.gray(`     File Size: ${memorySize}`));
-      console.log(chalk.gray(`     Number of Lines: ${linesOfCode}`));
-      console.log(chalk.gray(`     Number of Functions: ${numFunctions}`));
-    }
+    buildPrintOut(buildStart, builtFiles, this.parsedProjectFile.metadata);
   }
 
   /**
@@ -414,6 +352,14 @@ __SHARED__`;
     return null;
   }
 
+  /**
+   * Get array of file array data from the project file.
+   * Used for:
+   * client
+   *    a to b
+   * @param {string} fileTypeName
+   * @returns {Array} Data from the Array
+   */
   getSimpleArrayFileData(fileTypeName) {
     let inArray = false;
     let data = {};
@@ -442,5 +388,67 @@ __SHARED__`;
     }
 
     return null;
+  }
+}
+
+function buildPrintOut(buildStart, builtFiles, projectMetadata) {
+  // Calculate Time to Compile
+  let buildEnd = new Date().getTime();
+  let buildTime = buildEnd - buildStart;
+  let buildPrint = getRandomBuildPrint(buildTime);
+
+  // Calculate total memory used
+  let totalMemory = 0;
+  for (const [, fileContent] of Object.entries(builtFiles)) {
+    totalMemory += Buffer.byteLength(fileContent, "utf-8");
+  }
+
+  // Calculate the total number of lines of code & functions
+  let totalLinesOfCode = 0;
+  let totalFunctions = 0;
+  for (const [, fileContent] of Object.entries(builtFiles)) {
+    let lines = fileContent.split("\n");
+    totalLinesOfCode += lines.length;
+    totalFunctions += lines.filter((line) =>
+      line.trim().includes("funct")
+    ).length;
+  }
+
+  // Project Build Data Logs
+  console.log(chalk.bold("\nBuild Summary"));
+  console.log(chalk.gray("=============================="));
+  console.log(chalk.blue.bold(`Project: ${projectMetadata.name}`));
+  console.log(chalk.blue.bold(`Version: ${projectMetadata.version}`));
+  console.log(chalk.blue.bold(`Build Time: ${buildTime}ms || ${buildPrint}`));
+  console.log(
+    chalk.blue.bold(`Build Memory: ${formatMemorySize(totalMemory)}`)
+  );
+  console.log(
+    chalk.blue.bold(`Total Build Lines of Code: ${totalLinesOfCode}`)
+  );
+  console.log(
+    chalk.blue.bold(`Total Build Number of Functions: ${totalFunctions}`)
+  );
+
+  console.log(chalk.bold("\nBuilt Files:"));
+  console.log(chalk.gray("-------------------------------"));
+
+  // File Build Data Logs
+  for (const [fileName, fileContent] of Object.entries(builtFiles)) {
+    // Calculate File Size
+    let memorySize = formatMemorySize(Buffer.byteLength(fileContent, "utf-8"));
+
+    // Calculate the number of lines & functions
+    let lines = fileContent.split("\n");
+    let linesOfCode = lines.length;
+    let numFunctions = lines.filter((line) =>
+      line.trim().includes("funct")
+    ).length;
+
+    // Print Out
+    console.log(chalk.green(`   ${fileName}.lua`));
+    console.log(chalk.gray(`     File Size: ${memorySize}`));
+    console.log(chalk.gray(`     Number of Lines: ${linesOfCode}`));
+    console.log(chalk.gray(`     Number of Functions: ${numFunctions}`));
   }
 }
