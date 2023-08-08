@@ -13,5 +13,5 @@ server_scripts {
   
 }
 shared_scripts {
-  
+  env.lua
 }

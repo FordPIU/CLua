@@ -10,12 +10,20 @@
   ╚════════════════════════════════════╝
 */
 
-import { error } from "console";
 import fs from "fs";
 import path from "path";
+import chalk from "chalk";
 import { convertCLuaToLua } from "./fileCompiler.mjs";
-import { removeComments } from "./utils.mjs";
+import {
+  removeComments,
+  getRandomBuildPrint,
+  formatMemorySize,
+} from "./utils.mjs";
 
+// TODO: Implement Plugins
+// TODO: Implement Imports
+// TODO: Implement Env
+// TODO: Implement Assets
 export class ProjectCompiler {
   projectFileText;
   projectFileLines;
@@ -45,6 +53,9 @@ export class ProjectCompiler {
    * Build the Project!
    */
   build() {
+    // Timer
+    let buildStart = new Date().getTime();
+
     // FX Manifest Generation
     let luaScriptFiles = {
       client: [],
@@ -72,18 +83,6 @@ __SHARED__`;
           luaScriptFiles[section].push(luaFileName);
         }
       }
-    }
-
-    // Inject/replace the data into fxmanifestContent
-    for (const section in luaScriptFiles) {
-      const fileList = luaScriptFiles[section];
-      const fileListString = fileList.join(",\n  ");
-      fxmanifestContent = fxmanifestContent.replace(
-        `__${section.toUpperCase()}__`,
-        `${section.toLowerCase()}_scripts {
-  ${fileListString}
-}`
-      );
     }
 
     // Build the Files
@@ -148,6 +147,43 @@ __SHARED__`;
       fs.writeFileSync(filePath, fileContent, "utf-8");
     }
 
+    // Inject Environmental Variables
+    let environmentalVars = this.parsedProjectFile.env_vars;
+    if (Object.keys(environmentalVars).length > 0) {
+      let environmentalVarString = "";
+
+      for (const [varName, varValue] of Object.entries(environmentalVars)) {
+        environmentalVarString += `${varName
+          .trim()
+          .toUpperCase()} = ${varValue.trim()}\n`;
+      }
+
+      fs.writeFileSync(
+        path.join(
+          path.dirname(this.projectFilePath) +
+            "/" +
+            (this.parsedProjectFile.metadata.build_into || "build") +
+            "/env.lua"
+        ),
+        environmentalVarString,
+        "utf-8"
+      );
+
+      luaScriptFiles.shared.push("env.lua");
+    }
+
+    // Inject/replace the data into fxmanifestContent
+    for (const section in luaScriptFiles) {
+      const fileList = luaScriptFiles[section];
+      const fileListString = fileList.join(",\n  ");
+      fxmanifestContent = fxmanifestContent.replace(
+        `__${section.toUpperCase()}__`,
+        `${section.toLowerCase()}_scripts {
+  ${fileListString}
+}`
+      );
+    }
+
     // Write Manifest
     fs.writeFileSync(
       path.join(
@@ -159,6 +195,71 @@ __SHARED__`;
       fxmanifestContent,
       "utf-8"
     );
+
+    // End of the Build Process!
+    // Calculate Time to Compile
+    let buildEnd = new Date().getTime();
+    let buildTime = buildEnd - buildStart;
+    let buildPrint = getRandomBuildPrint(buildTime);
+
+    // Calculate total memory used
+    let totalMemory = 0;
+    for (const [, fileContent] of Object.entries(builtFiles)) {
+      totalMemory += Buffer.byteLength(fileContent, "utf-8");
+    }
+
+    // Calculate the total number of lines of code & functions
+    let totalLinesOfCode = 0;
+    let totalFunctions = 0;
+    for (const [, fileContent] of Object.entries(builtFiles)) {
+      let lines = fileContent.split("\n");
+      totalLinesOfCode += lines.length;
+      totalFunctions += lines.filter((line) =>
+        line.trim().includes("funct")
+      ).length;
+    }
+
+    // End of Build Logs
+    console.log(chalk.bold("\nBuild Summary"));
+    console.log(chalk.gray("=============================="));
+    console.log(
+      chalk.blue.bold(`Project: ${this.parsedProjectFile.metadata.name}`)
+    );
+    console.log(
+      chalk.blue.bold(`Version: ${this.parsedProjectFile.metadata.version}`)
+    );
+    console.log(chalk.blue.bold(`Build Time: ${buildTime}ms || ${buildPrint}`));
+    console.log(
+      chalk.blue.bold(`Build Memory: ${formatMemorySize(totalMemory)}`)
+    );
+    console.log(
+      chalk.blue.bold(`Total Build Lines of Code: ${totalLinesOfCode}`)
+    );
+    console.log(
+      chalk.blue.bold(`Total Build Number of Functions: ${totalFunctions}`)
+    );
+
+    console.log(chalk.bold("\nBuilt Files:"));
+    console.log(chalk.gray("-------------------------------"));
+    for (const [fileName, fileContent] of Object.entries(builtFiles)) {
+      // Calculate File Size
+      let memorySize = formatMemorySize(
+        Buffer.byteLength(fileContent, "utf-8")
+      );
+
+      // Calculate the number of lines & functions
+      let lines = fileContent.split("\n");
+      let linesOfCode = lines.length;
+      let numFunctions = lines.filter((line) =>
+        line.trim().includes("funct")
+      ).length;
+
+      // Print Out
+      console.log(chalk.green(`   ${fileName}.lua`));
+      console.log(chalk.gray(`     File Size: ${memorySize}`));
+      console.log(chalk.gray(`     Number of Lines: ${linesOfCode}`));
+      console.log(chalk.gray(`     Number of Functions: ${numFunctions}`));
+    }
   }
 
   /**
