@@ -22,7 +22,6 @@ import {
 
 // TODO: Implement Plugins
 // TODO: Implement Imports
-// TODO: Implement Env
 // TODO: Implement Assets
 export class ProjectCompiler {
   projectFileText;

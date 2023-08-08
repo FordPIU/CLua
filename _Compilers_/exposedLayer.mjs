@@ -2,15 +2,12 @@
 
 import { ProjectCompiler } from "./projectCompiler.mjs";
 
-// Get the absolute path of the project file
-const projectFilePath = "D:/Github/CLua/ExampleProject/ExampleProj.cluaprojx";
+// Get the project file path from the command-line arguments
+const projectFilePath = process.argv[2];
 
 // Create a new instance of CLuaProjectCompiler
 const compiler = new ProjectCompiler(projectFilePath);
 
-// test
+// Parse & Build
 compiler.parse();
 compiler.build();
-
-// Build the project into Lua
-//compiler.buildProject();
