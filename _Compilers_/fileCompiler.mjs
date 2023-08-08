@@ -10,6 +10,9 @@
   ╚════════════════════════════════════╝
 */
 
+import fs from "fs";
+import { executePlugin } from "./utils.mjs";
+
 function addParenthesesToPrint(cluaCode) {
   const lines = cluaCode.split("\n");
   let insideString = false;
@@ -131,6 +134,8 @@ export function convertCLuaToLua(cluaCode, disabledFeatures) {
   if (!disabledFeatures.includes("npprint")) {
     cluaCode = addParenthesesToPrint(cluaCode);
   }
+
+  // Plugins!
 
   return cluaCode;
 }

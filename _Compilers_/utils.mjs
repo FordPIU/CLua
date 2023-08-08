@@ -1,6 +1,7 @@
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
+import vm from "vm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +17,7 @@ export function removeComments(text) {
 }
 
 const quirkyMessages = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "quirkyTimes.json"), "utf8")
+  fs.readFileSync(path.join(__dirname, "data/quirkyTimes.json"), "utf8")
 );
 export function getRandomBuildPrint(msTime) {
   let messageGroup;
