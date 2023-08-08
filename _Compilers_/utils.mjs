@@ -1,10 +1,12 @@
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
-import vm from "vm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const quirkyMessages = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "data/quirkyTimes.json"), "utf8")
+);
 
 export function removeComments(text) {
   // Remove Single-Line Comments
@@ -16,9 +18,6 @@ export function removeComments(text) {
   return text;
 }
 
-const quirkyMessages = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "data/quirkyTimes.json"), "utf8")
-);
 export function getRandomBuildPrint(msTime) {
   let messageGroup;
   if (msTime < 1000) messageGroup = "less than 1 second";
