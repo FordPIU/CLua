@@ -20,9 +20,6 @@ import {
   formatMemorySize,
 } from "./utils.mjs";
 
-// TODO: Implement Plugins
-// TODO: Implement Imports
-// TODO: Implement Assets
 export class ProjectCompiler {
   projectFileText;
   projectFileLines;
@@ -162,13 +159,13 @@ __SHARED__`;
           path.dirname(this.projectFilePath) +
             "/" +
             (this.parsedProjectFile.metadata.build_into || "build") +
-            "/env.lua"
+            "/__env__.lua"
         ),
         environmentalVarString,
         "utf-8"
       );
 
-      luaScriptFiles.shared.push("env.lua");
+      luaScriptFiles.shared.push("__env__.lua");
     }
 
     // Inject/replace the data into fxmanifestContent
