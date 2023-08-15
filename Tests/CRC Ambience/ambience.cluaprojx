@@ -1,8 +1,0 @@
-
-name "Calebs Contract - Ambience"
-version "1.0.0"
-description "Background music with audio control."
-build_into "resource"
-
-server
-    main

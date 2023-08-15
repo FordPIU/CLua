@@ -77,3 +77,6 @@ var test5 = {
 }
 
 print "/* Hi there */"
+
+let var20 true
+let var21 = true
