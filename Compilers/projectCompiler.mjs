@@ -312,23 +312,31 @@ __SHARED__`;
     for (const section in this.projectLuaFiles) {
       let fileList = this.projectLuaFiles[section];
       let fileListKeys = Object.keys(fileList);
-      let fileNameList = [];
 
-      fileListKeys.forEach((fileName) => {
-        fileNameList.push(`'${fileName}.lua'`);
-      });
+      if (fileListKeys.length > 0) {
+        let fileNameList = [];
 
-      if (hasWrittenEnvFile && section == "shared") {
-        fileNameList.push(`'__env__.lua'`);
-      }
+        fileListKeys.forEach((fileName) => {
+          fileNameList.push(`'${fileName}.lua'`);
+        });
 
-      const fileListString = fileNameList.join(",\n  ");
-      fxmanifestContent = fxmanifestContent.replace(
-        `__${section.toUpperCase()}__`,
-        `${section.toLowerCase()}_scripts {
+        if (hasWrittenEnvFile && section == "shared") {
+          fileNameList.push(`'__env__.lua'`);
+        }
+
+        const fileListString = fileNameList.join(",\n  ");
+        fxmanifestContent = fxmanifestContent.replace(
+          `__${section.toUpperCase()}__`,
+          `${section.toLowerCase()}_scripts {
   ${fileListString}
 }`
-      );
+        );
+      } else {
+        fxmanifestContent = fxmanifestContent.replace(
+          `__${section.toUpperCase()}__`,
+          ``
+        );
+      }
     }
 
     // Write Manifest

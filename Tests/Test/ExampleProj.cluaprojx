@@ -1,0 +1,7 @@
+name "MyCLuaProject"
+version "1.0.0"
+description "A sample CLua project built with cluaprojx."
+build_into "build"
+
+client
+    example.clua
