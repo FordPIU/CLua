@@ -56,14 +56,92 @@ function addParenthesesToPrint(cluaCode) {
 }
 
 export function convertCLuaToLua(cluaCode, disabledFeatures) {
+  // All Words
+  let codeWords = cluaCode
+    .replaceAll("\n", " ")
+    .split(" ")
+    .filter((word) => word.trim() !== "");
+  console.log("---- REPACING ----");
+  let modifiedCodeWords = codeWords.map((word, index, array) => {
+    // Get the Next Word
+    let nextWord = array[index + 1];
+
+    // Trim the Current Word
+    if (typeof word === "string") {
+      word = word.trim();
+    }
+
+    // Trim the Next Word
+    if (typeof nextWord === "string") {
+      nextWord = nextWord.trim();
+    }
+
+    console.log(`Current: ${word}, Next: ${nextWord}`);
+
+    // Variable Definitions
+    if (isFeatureEnabled("std.variableDefs", disabledFeatures)) {
+      // Undefined Variable Def
+      if (!nextWord) {
+        console.error("Unfinished Variable Declaration.");
+      }
+
+      // LET
+      if (word === "let") {
+        // Global def
+        if (isAllUppercase(nextWord)) {
+          return "";
+        } else {
+          // Local def
+          return "local";
+        }
+      }
+
+      // VAR
+      if (word === "var") {
+        // Global def
+        if (isAllUppercase(nextWord)) {
+          return "";
+        } else {
+          // Local def
+          return "local";
+        }
+      }
+    }
+
+    // Function Definitions
+    if (isFeatureEnabled("std.functionDefs", disabledFeatures)) {
+      // Undefined Function Def
+      if (!nextWord) {
+        console.error("Unfinished Function Declaration.");
+      }
+
+      // FN
+      if (word === "fn") {
+        // Global def
+        if (isAllUppercase(nextWord)) {
+          return "function";
+        } else {
+          // Local def
+          return "local function";
+        }
+      }
+    }
+
+    return word;
+  });
+  console.log("---- RESULT ----");
+  modifiedCodeWords.forEach((word) => {
+    console.log(word);
+  });
+
   // Extract all Strings
   let stringArray = {};
-  let matchedStrings = cluaCode.match(/\".*\"/g)
+  let matchedStrings = cluaCode.match(/\".*\"/g);
 
   // Local and Global Function Definitions
-  if (!disabledFeatures.includes("funct")) {
-    cluaCode = cluaCode.replace(/\blfunct\b/g, "local function");
-    cluaCode = cluaCode.replace(/\bfunct\b/g, "function");
+  if (!disabledFeatures.includes("std::functionDefs")) {
+    cluaCode = cluaCode.replace(/\bfn [a-zA-Z_]\w*/g, "local function");
+    cluaCode = cluaCode.replace(/\bfn [A-Z_]+/g, "function");
   }
 
   // Local and Global Variable Definitions
@@ -143,4 +221,14 @@ export function convertCLuaToLua(cluaCode, disabledFeatures) {
   // Plugins!
 
   return cluaCode;
+}
+
+function isFeatureDisabled(featureName, disabledFeatures) {
+  return disabledFeatures.includes(featureName);
+}
+function isFeatureEnabled(featureName, disabledFeatures) {
+  return !disabledFeatures.includes(featureName);
+}
+function isAllUppercase(str) {
+  return str === str.toUpperCase();
 }

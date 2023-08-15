@@ -62,7 +62,7 @@ var teststr "funct"
 
 print "Hi!"
 
-var testincrement 1
+var testincrement = 1
 testincrement++
 testincrement+=5
 
@@ -72,7 +72,7 @@ print teststr
 print add(someTable[5], x)
 print "Hi2"
 
-var bool false
+var bool = false
 var bool2 = true
 
 var test5 = {
@@ -82,5 +82,5 @@ var test5 = {
 
 print "/* Hi there */"
 
-let var20 true
+let var20 = true
 let var21 = true

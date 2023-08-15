@@ -468,7 +468,7 @@ function buildPrintOut(
     let lines = fileContent.split("\n");
     totalLinesOfCode += lines.length;
     totalFunctions += lines.filter((line) =>
-      line.trim().includes("funct")
+      line.trim().includes("fn")
     ).length;
   }
 
@@ -508,7 +508,7 @@ function buildPrintOut(
     let lines = fileContent.split("\n");
     let linesOfCode = lines.length;
     let numFunctions = lines.filter((line) =>
-      line.trim().includes("funct")
+      line.trim().includes("fn")
     ).length;
 
     // Print Out

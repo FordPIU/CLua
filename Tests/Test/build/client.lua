@@ -1,8 +1,8 @@
 let HELLO_WORLD = "Hello World!" 
-fn PRINT_HELLO_WORLD() 
+local function() 
     print( HELLO_WORLD)
 end
-fn add(a, b) 
+local function(a, b) 
     return a + b
 end
 local x = 10
@@ -38,8 +38,8 @@ end
 for k, v in pairs(someTable) do
     print( "Key: " .. k .. ", Value: " .. v)
 end
-fn test() return end
-local teststr = "function"
+local function() return end
+local teststr = "funct"
 print( "Hi!")
 local testincrement = 1
 testincrement + 1
@@ -56,5 +56,5 @@ local test5 = {
     "test"
 }
 print( "")
-let var20 true
+let var20 = true
 let var21 = true
