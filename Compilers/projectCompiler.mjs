@@ -25,6 +25,11 @@ export class ProjectCompiler {
   projectFileLines;
   parsedProjectFile;
   projectFilePath;
+  projectLuaFiles = {
+    client: [],
+    server: [],
+    shared: [],
+  };
 
   constructor(filePath) {
     // Check that the file path exists
@@ -52,148 +57,27 @@ export class ProjectCompiler {
     // Timer
     let buildStart = new Date().getTime();
 
-    // FX Manifest Generation
-    let luaScriptFiles = {
-      client: [],
-      server: [],
-      shared: [],
-    };
-    let fxmanifestContent = `fx_version 'cerulean'
-games { 'gta5' }
-author 'Caleb B. (@calebb.) (calebsrealism@gmail.com)'
-description '${this.parsedProjectFile.metadata.desc}'
-version '${this.parsedProjectFile.metadata.version}'
-lua54 'yes'
-
-__CLIENT__
-__SERVER__
-__SHARED__`;
-
-    // Build the luaScriptFiles arrays
-    for (const section in this.parsedProjectFile.files) {
-      for (const fileName in this.parsedProjectFile.files[section]) {
-        const luaFileName =
-          this.parsedProjectFile.files[section][fileName] + ".lua";
-
-        if (!luaScriptFiles[section].includes(luaFileName)) {
-          luaScriptFiles[section].push(luaFileName);
-        }
-      }
-    }
+    // Build the Lua Files List
+    this.buildTask_LuaFilesList();
 
     // Build the Files
-    let builtFiles = [];
-    for (const section in this.parsedProjectFile.files) {
-      for (const [cFileName, nFileName] of Object.entries(
-        this.parsedProjectFile.files[section]
-      )) {
-        // File Path
-        let filePath;
-        if (!path.isAbsolute(cFileName)) {
-          filePath = path.join(path.dirname(this.projectFilePath), cFileName);
-        } else {
-          filePath = cFileName;
-        }
+    let buildFileStart = new Date().getTime();
+    let builtFiles = this.buildTask_CLuaFiles();
+    let buildFileEnd = new Date().getTime();
 
-        // File Extension
-        if (!path.extname(filePath)) {
-          filePath += ".clua";
-        }
+    // Write the Files
+    this.buildTask_WriteLuaFiles(builtFiles);
 
-        // Ensure file exists
-        if (!fs.existsSync(filePath)) {
-          console.error(`File not found: ${filePath}`);
-        }
-
-        // Read the File
-        let cLuaFile = fs.readFileSync(filePath, "utf-8");
-
-        // Ensure built Files [ File Name ]
-        if (!builtFiles[nFileName]) {
-          builtFiles[nFileName] = "";
-        }
-
-        // Write
-        builtFiles[nFileName] +=
-          convertCLuaToLua(cLuaFile, this.parsedProjectFile.feature_kill) +
-          "\n";
-      }
-    }
-
-    for (const [fileName, fileContent] of Object.entries(builtFiles)) {
-      // File Path
-      let filePath;
-      if (!path.isAbsolute(fileName)) {
-        filePath = path.join(
-          path.dirname(this.projectFilePath) +
-            "/" +
-            (this.parsedProjectFile.metadata.build_into || "build"),
-          fileName + ".lua"
-        );
-      } else {
-        filePath = fileName;
-      }
-
-      // Ensure folder exists
-      if (!fs.existsSync(path.dirname(filePath))) {
-        fs.mkdirSync(path.dirname(filePath));
-      }
-
-      // Write File
-      fs.writeFileSync(filePath, fileContent, "utf-8");
-    }
-
-    // Inject Environmental Variables
-    let environmentalVars = this.parsedProjectFile.env_vars;
-    if (Object.keys(environmentalVars).length > 0) {
-      let environmentalVarString = "";
-
-      for (const [varName, varValue] of Object.entries(environmentalVars)) {
-        environmentalVarString += `${varName
-          .trim()
-          .toUpperCase()} = ${varValue.trim()}\n`;
-      }
-
-      fs.writeFileSync(
-        path.join(
-          path.dirname(this.projectFilePath) +
-            "/" +
-            (this.parsedProjectFile.metadata.build_into || "build") +
-            "/__env__.lua"
-        ),
-        environmentalVarString,
-        "utf-8"
-      );
-
-      luaScriptFiles.shared.push("__env__.lua");
-    }
-
-    // Inject/replace the data into fxmanifestContent
-    for (const section in luaScriptFiles) {
-      const fileList = luaScriptFiles[section];
-      const fileListString = fileList.join(",\n  ");
-      fxmanifestContent = fxmanifestContent.replace(
-        `__${section.toUpperCase()}__`,
-        `${section.toLowerCase()}_scripts {
-  ${fileListString}
-}`
-      );
-    }
-
-    // Write Manifest
-    fs.writeFileSync(
-      path.join(
-        path.dirname(this.projectFilePath) +
-          "/" +
-          (this.parsedProjectFile.metadata.build_into || "build") +
-          "/fxmanifest.lua"
-      ),
-      fxmanifestContent,
-      "utf-8"
-    );
+    // Write the FXManifest
+    this.buildTask_Manifest();
 
     // End of the Build Process!
-    buildPrintOut(buildStart, builtFiles, this.parsedProjectFile.metadata);
+    buildPrintOut(
+      buildStart,
+      builtFiles,
+      this.parsedProjectFile.metadata,
+      buildFileEnd - buildFileStart
+    );
   }
 
   /**
@@ -219,7 +103,7 @@ __SHARED__`;
     this.parsedProjectFile.metadata["desc"] =
       this.getNonArrayData("description");
     this.parsedProjectFile.metadata["build_folder"] =
-      this.getNonArrayData("build_into");
+      this.getNonArrayData("build_into") || "build";
 
     // Feature Kill
     this.parsedProjectFile.feature_kill =
@@ -385,13 +269,173 @@ __SHARED__`;
 
     return null;
   }
+
+  buildTask_Manifest() {
+    let fxmanifestContent = `fx_version 'cerulean'
+games { 'gta5' }
+author 'Caleb B. (@calebb.) (calebsrealism@gmail.com)'
+description '${this.parsedProjectFile.metadata.desc}'
+version '${this.parsedProjectFile.metadata.version}'
+lua54 'yes'
+
+__CLIENT__
+__SERVER__
+__SHARED__`;
+
+    // Inject Environmental Variables
+    let environmentalVars = this.parsedProjectFile.env_vars;
+    let hasWrittenEnvFile = false;
+    if (Object.keys(environmentalVars).length > 0) {
+      let environmentalVarString = "";
+
+      for (const [varName, varValue] of Object.entries(environmentalVars)) {
+        environmentalVarString += `${varName
+          .trim()
+          .toUpperCase()} = ${varValue.trim()}\n`;
+      }
+
+      fs.writeFileSync(
+        path.join(
+          path.dirname(this.projectFilePath) +
+            "/" +
+            this.parsedProjectFile.metadata.build_folder +
+            "/__env__.lua"
+        ),
+        environmentalVarString,
+        "utf-8"
+      );
+
+      hasWrittenEnvFile = true;
+    }
+
+    // Inject/replace the data into fxmanifestContent
+    for (const section in this.projectLuaFiles) {
+      let fileList = this.projectLuaFiles[section];
+      let fileListKeys = Object.keys(fileList);
+      let fileNameList = [];
+
+      fileListKeys.forEach((fileName) => {
+        fileNameList.push(`'${fileName}.lua'`);
+      });
+
+      if (hasWrittenEnvFile && section == "shared") {
+        fileNameList.push(`'__env__.lua'`);
+      }
+
+      const fileListString = fileNameList.join(",\n  ");
+      fxmanifestContent = fxmanifestContent.replace(
+        `__${section.toUpperCase()}__`,
+        `${section.toLowerCase()}_scripts {
+  ${fileListString}
+}`
+      );
+    }
+
+    // Write Manifest
+    fs.writeFileSync(
+      path.join(
+        path.dirname(this.projectFilePath) +
+          "/" +
+          this.parsedProjectFile.metadata.build_folder +
+          "/fxmanifest.lua"
+      ),
+      fxmanifestContent,
+      "utf-8"
+    );
+  }
+
+  buildTask_LuaFilesList() {
+    for (const section in this.parsedProjectFile.files) {
+      let luaFiles = this.projectLuaFiles[section];
+      let fileEntries = Object.entries(this.parsedProjectFile.files[section]);
+
+      for (const [cFileName, nFileName] of fileEntries) {
+        if (!luaFiles[nFileName]) {
+          luaFiles[nFileName] = {
+            rawFiles: [],
+          };
+        }
+
+        luaFiles[nFileName].rawFiles.push(cFileName);
+      }
+    }
+  }
+
+  buildTask_CLuaFiles() {
+    let builtFiles = [];
+
+    for (const section in this.parsedProjectFile.files) {
+      let fileEntries = Object.entries(this.parsedProjectFile.files[section]);
+
+      for (const [cFileName, nFileName] of fileEntries) {
+        // Get File Path
+        let filePath;
+        if (!path.isAbsolute(cFileName)) {
+          filePath = path.join(path.dirname(this.projectFilePath), cFileName);
+        } else {
+          filePath = cFileName;
+        }
+
+        // Append File Extension
+        if (!path.extname(filePath)) {
+          filePath += ".clua";
+        }
+
+        // Ensure file exists
+        if (!fs.existsSync(filePath)) {
+          console.error(`File not found: ${filePath}`);
+        }
+
+        // Read the File
+        let cLuaFile = fs.readFileSync(filePath, "utf-8");
+
+        // Ensure built Files [ File Name ]
+        if (!builtFiles[nFileName]) {
+          builtFiles[nFileName] = "";
+        }
+
+        // Write
+        builtFiles[nFileName] +=
+          convertCLuaToLua(cLuaFile, this.parsedProjectFile.feature_kill) +
+          "\n";
+      }
+    }
+
+    return builtFiles;
+  }
+
+  buildTask_WriteLuaFiles(builtFiles) {
+    for (const [fileName, fileContent] of Object.entries(builtFiles)) {
+      // File Path
+      let filePath;
+      if (!path.isAbsolute(fileName)) {
+        filePath = path.join(
+          path.dirname(this.projectFilePath) +
+            "/" +
+            this.parsedProjectFile.metadata.build_folder,
+          fileName + ".lua"
+        );
+      } else {
+        filePath = fileName;
+      }
+
+      // Ensure folder exists
+      if (!fs.existsSync(path.dirname(filePath))) {
+        fs.mkdirSync(path.dirname(filePath));
+      }
+
+      // Write File
+      fs.writeFileSync(filePath, fileContent, "utf-8");
+    }
+  }
 }
 
-function buildPrintOut(buildStart, builtFiles, projectMetadata) {
+function buildPrintOut(buildStart, builtFiles, projectMetadata, fileBuildTime) {
   // Calculate Time to Compile
   let buildEnd = new Date().getTime();
   let buildTime = buildEnd - buildStart;
   let buildPrint = getRandomBuildPrint(buildTime);
+  let fileBuildPrint = getRandomBuildPrint(fileBuildTime);
 
   // Calculate total memory used
   let totalMemory = 0;
@@ -415,6 +459,9 @@ function buildPrintOut(buildStart, builtFiles, projectMetadata) {
   console.log(chalk.gray("=============================="));
   console.log(chalk.blue.bold(`Project: ${projectMetadata.name}`));
   console.log(chalk.blue.bold(`Version: ${projectMetadata.version}`));
+  console.log(
+    chalk.blue.bold(`File Build Time: ${fileBuildTime}ms || ${fileBuildPrint}`)
+  );
   console.log(chalk.blue.bold(`Build Time: ${buildTime}ms || ${buildPrint}`));
   console.log(
     chalk.blue.bold(`Build Memory: ${formatMemorySize(totalMemory)}`)

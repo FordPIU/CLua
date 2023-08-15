@@ -56,6 +56,10 @@ function addParenthesesToPrint(cluaCode) {
 }
 
 export function convertCLuaToLua(cluaCode, disabledFeatures) {
+  // Extract all Strings
+  let stringArray = {};
+  let matchedStrings = cluaCode.match(/\".*\"/g)
+
   // Local and Global Function Definitions
   if (!disabledFeatures.includes("funct")) {
     cluaCode = cluaCode.replace(/\blfunct\b/g, "local function");

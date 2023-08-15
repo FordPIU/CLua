@@ -6,12 +6,12 @@ version '1.0.0'
 lua54 'yes'
 
 client_scripts {
-  utils.lua,
-  client.lua
+  'utils.lua',
+  'client.lua'
 }
 server_scripts {
   
 }
 shared_scripts {
-  env.lua
+  '__env__.lua'
 }

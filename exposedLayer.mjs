@@ -1,6 +1,4 @@
-// execute using "node --experimental-modules _Compilers_/tester.mjs"
-
-import { ProjectCompiler } from "./projectCompiler.mjs";
+import { ProjectCompiler } from "./Compilers/projectCompiler.mjs";
 
 // Get the project file path from the command-line arguments
 const projectFilePath = process.argv[2];
