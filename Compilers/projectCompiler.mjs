@@ -69,14 +69,17 @@ export class ProjectCompiler {
     this.buildTask_WriteLuaFiles(builtFiles);
 
     // Write the FXManifest
+    let buildManifestStart = new Date().getTime();
     this.buildTask_Manifest();
+    let buildManifestEnd = new Date().getTime();
 
     // End of the Build Process!
     buildPrintOut(
       buildStart,
       builtFiles,
       this.parsedProjectFile.metadata,
-      buildFileEnd - buildFileStart
+      buildFileEnd - buildFileStart,
+      buildManifestEnd - buildFileStart
     );
   }
 
@@ -438,12 +441,19 @@ __SHARED__`;
   }
 }
 
-function buildPrintOut(buildStart, builtFiles, projectMetadata, fileBuildTime) {
+function buildPrintOut(
+  buildStart,
+  builtFiles,
+  projectMetadata,
+  fileBuildTime,
+  manifestBuildTime
+) {
   // Calculate Time to Compile
   let buildEnd = new Date().getTime();
   let buildTime = buildEnd - buildStart;
   let buildPrint = getRandomBuildPrint(buildTime);
   let fileBuildPrint = getRandomBuildPrint(fileBuildTime);
+  let manifestBuildPrint = getRandomBuildPrint(manifestBuildTime);
 
   // Calculate total memory used
   let totalMemory = 0;
@@ -469,6 +479,11 @@ function buildPrintOut(buildStart, builtFiles, projectMetadata, fileBuildTime) {
   console.log(chalk.blue.bold(`Version: ${projectMetadata.version}`));
   console.log(
     chalk.blue.bold(`File Build Time: ${fileBuildTime}ms || ${fileBuildPrint}`)
+  );
+  console.log(
+    chalk.blue.bold(
+      `Manifest Build Time: ${manifestBuildTime}ms || ${manifestBuildPrint}`
+    )
   );
   console.log(chalk.blue.bold(`Build Time: ${buildTime}ms || ${buildPrint}`));
   console.log(
