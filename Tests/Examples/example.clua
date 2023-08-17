@@ -11,7 +11,7 @@ if localVar > 5 then
     [export] // This is a invalid export, as exports cannot be nested
     let exportVar = localVar * 2
 
-    [globla] // This is valid, as globals may be nested
+    [global] // This is valid, as globals may be nested
     let globlaVar2 = 582
 end
 
