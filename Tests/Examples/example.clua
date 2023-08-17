@@ -8,8 +8,11 @@ let globalString = "Hello, global!"
 let localVar = 10
 
 if localVar > 5 then
-    [export]
+    [export] // This is a invalid export, as exports cannot be nested
     let exportVar = localVar * 2
+
+    [globla] // This is valid, as globals may be nested
+    let globlaVar2 = 582
 end
 
 // Function Declarations
