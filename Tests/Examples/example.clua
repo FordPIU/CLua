@@ -1,86 +1,142 @@
-let HELLO_WORLD = "Hello World!" // Because its all capitalized, this is a global variable.
+// Variable Declarations and Scoping
+[export]
+let globalVar = 42
 
-fn PRINT_HELLO_WORLD() // Because its all capitalized, this is a global function.
-    print HELLO_WORLD
+[global]
+let globalString = "Hello, global!"
+
+let localVar = 10
+
+if localVar > 5 then
+    [export]
+    let exportVar = localVar * 2
 end
 
-fn add(a, b) // This is a local function.
+// Function Declarations
+funct greet(name)
+    print "Hello, " .. name .. "!"
+end
+
+funct calculateSum(a, b)
     return a + b
 end
 
-var x = 10
-var someTable = {
-    "Hello",
-    "World",
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9
-}
-if x > 5 then
-    print "x is greater than 5"
-elseif x < 5 then
-    print "x is less than 5"
+// Control Flow
+if globalVar > 40 then
+    print "Global variable is greater than 40."
+elseif globalVar < 40 then
+    print "Global variable is less than 40."
 else
-    print "x is equal to 5"
+    print "Global variable is equal to 40."
 end
 
+// Loops
 for to 5
-    print "Iteration" :.. i
+    print "Iteration: " .. i
 end
 
 for k to 5
-    print "Iteration" :.. k
+    print "Iteration: " .. k
 end
-// :.. would output like: "Iteration: 0"
 
 for pairs someTable
-    print "Key" :.. i .. ", Value" :.. v
+    print "Key: " .. i .. ", Value: " .. v
 end
 
-for k, v pairs someTable
-    print "Key: " .. k .. ", Value: " .. v
+// Comment Types
+/* Multi-line
+   comment */
+
+// Function Calls
+greet "Alice"
+print calculateSum(5, 7)
+
+// Variable Usage
+print globalVar
+print globalString
+print exportVar
+
+// Arithmetic and Assignment
+let result = calculateSum(globalVar, localVar)
+result += 5
+result *= 2
+result++
+result//
+result** // multiplies it by 2
+
+// Immutable Variables
+let immutableVar = 100 (immutable)
+
+// Boolean Logic
+if localVar > 5 and globalVar < 50 then
+    print "Both conditions are true."
 end
 
-fn test() return end
-// funct
-var teststr "funct"
+// String Concatenation
+let message = "Hello" .. ", " .. "world!"
 
-/*
-    this
-    is
-    a
-    multi
-    line
-    comment
-*/
-
-print "Hi!"
-
-var testincrement = 1
-testincrement++
-testincrement+=5
-
-print testincrement
-print HelloWorld
-print teststr
-print add(someTable[5], x)
-print "Hi2"
-
-var bool = false
-var bool2 = true
-
-var test5 = {
-    "test",
-    "test"
+// Table Initialization
+let person = {
+    name = "John",
+    age = 30,
+    occupation = "Engineer"
 }
 
-print "/* Hi there */"
+// Print Statements
+print message
+print numbers[3]
+print person.name
 
-let var20 = true
-let var21 = true
+// Exported Variables
+[export]
+let exportedValue = "This is an exported value."
+
+// Pattern Matching
+is result {
+    5 -> print "Its 5!"
+    10 -> print "Its 10!"
+    -> print "Unknown"
+}
+
+// Hardset Type Annotations
+funct subtract(a: number, b: number): number
+    return a - b
+end
+
+// Project File Directives
+#ifenv DEBUG
+    print "In Debug Mode"
+#endif
+
+// Destructuring
+let [x, y, z] = coords
+
+// Delete
+delete result
+
+// Custom Operators
+operator << (left, right)
+    return left .. right
+end
+
+let message = "Hello, " << "world!"
+
+// Generic values
+funct subtract(<T>values: number): number
+    let endNum = 0
+
+    for pairs values
+        endNum -= v
+    end
+
+    return endNum
+end
+
+// Template Functions
+template addFunction(name, param)
+    funct @name(a, b)
+        return a + b + @param
+    end
+end
+
+addFunction(addThree, 3)
