@@ -1,36 +1,37 @@
 !CustomVersioning // Request a plugin
 
-project "MyCLuaProject"
-    metadata:
-        version: @CustomVersioning // Return value of the plugin is inserted here
-        description: "A sample CLua project built with cluaprojx"
-        buildInto: "build"
+metadata:
+    name: "MyCLuaProject"
+    version: @CustomVersioning // Return value of the plugin is inserted here
+    // version: "0.5.0" // This is a normal version
+    description: "A sample CLua project built with cluaprojx"
+    buildInto: "build"
 
-    features:
-        disable: ["incrementing", "debug"]
+features:
+    disable: ["incrementing", "debug"]
 
-    extensions:
-        usePlugins: ["sickClasses", "coolerCompiler"]
-        importModules: ["amazingFunctions", "coolVariables"]
+extensions:
+    usePlugins: ["sickClasses", "coolerCompiler"]
+    importModules: ["amazingFunctions", "coolVariables"]
 
-    environment:
-        DEBUG: true
-        USE_FEATURE1: false
-        API_KEY: "your_api_key_here"
+environment:
+    DEBUG: true
+    USE_FEATURE1: false
+    API_KEY: "your_api_key_here"
 
-    assets:
-        include: ["datafile.json", "models/", "textures/", "sounds/"]
+assets:
+    include: ["datafile.json", "models/", "textures/", "sounds/"]
 
-    clientFiles:
-        main: "client_file1"
-        backup: "client_file2"
+clientFiles:
+    main: "client_file1"
+    backup: "client_file2"
 
-    serverFiles:
-        main: "server_file1"
-        server_file2
-        server_file3
-        main2: "server_file5"
+serverFiles:
+    main: "server_file1"
+    server_file2
+    server_file3
+    main2: "server_file5"
 
-    sharedFiles:
-        main: "shared_file1"
-        shared_file2
+sharedFiles:
+    main: "shared_file1"
+    shared_file2

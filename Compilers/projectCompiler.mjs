@@ -10,10 +10,12 @@
   ╚════════════════════════════════════╝
 */
 
-import { readFile, removeComments, splitWords } from "./utils.mjs";
+import assert from "assert";
+import { readFile, removeComments, splitWordsNotInString } from "./utils.mjs";
 
 /* 
   Next Generation of Project Compiler is going to use a Line by Line & Regex processor.
+  Note to self: good idea to add custom error handler. Assert kinda sucks.
 */
 
 /**
@@ -32,7 +34,7 @@ function getProjectFileText(filePath) {
   let fileText = readFile(filePath);
 
   if (fileText == null) {
-    throw new Error(
+    assert.fail(
       `Project File at ${filePath} does not exist, or is not readable.`
     );
   }
@@ -58,7 +60,7 @@ function processProjectFileText(rawProjectFileText) {
   let commentsRemoved = removeComments(rawProjectFileText);
 
   if (commentsRemoved == null) {
-    throw new Error(
+    assert.fail(
       `Project File encountered an error while the removing comments.`
     );
   }
@@ -80,21 +82,109 @@ function processProjectFileText(rawProjectFileText) {
  * @throws {Error} If a error is encountered while tokenizing the project file.
  */
 function getProjectFileWords(projectFileText) {
-  let words = splitWords(projectFileText);
+  let words = splitWordsNotInString(projectFileText);
 
   if (words == null) {
-    throw new Error(`Project File encountered an error while tokenizing.`);
+    assert.fail(`Project File encountered an error while tokenizing.`);
   }
 
   return words;
+}
+
+function parseProjectTokens(projectTokens) {
+  let projectData = {
+    name: "",
+    version: "",
+    desc: "",
+    buildFolder: "",
+    plugins: [],
+  };
+
+  for (let i = 0; i < projectTokens.length; i++) {
+    const currentToken = projectTokens[i];
+    const nextToken = i < projectTokens.length - 1 ? projectTokens[i + 1] : "";
+
+    // Plugin Definition
+    if (currentToken[0] == "!") {
+      let token = currentToken.slice(1);
+      projectData.plugins.push(token);
+      continue;
+    }
+
+    // Project Name
+    if (currentToken == "name:") {
+      let tokenMatch = nextToken.match(/"([^"]+)"/);
+
+      if (tokenMatch) {
+        projectData.name = tokenMatch[1];
+      } else {
+        assert.fail("None or Invalid Project Name.");
+      }
+
+      i++;
+      continue;
+    }
+
+    // Project Version
+    if (currentToken == "version:") {
+      let definedTokenMatch = nextToken.match(/"([^"]+)"/);
+      let pluginTokenMatch = nextToken.match(/@(\w+)/);
+
+      if (definedTokenMatch || pluginTokenMatch) {
+        // Defined Version
+        if (definedTokenMatch) {
+          projectData.version = definedTokenMatch[1];
+        } else {
+          // Plugin Version
+          projectData.version = "PLUGIN_RETURN_" + pluginTokenMatch[1];
+        }
+      } else {
+        assert.fail("None or Invalid Project Name.");
+      }
+
+      i++;
+      continue;
+    }
+
+    // Project Description
+    if (currentToken == "description:") {
+      let tokenMatch = nextToken.match(/"([^"]+)"/);
+
+      if (tokenMatch) {
+        projectData.desc = tokenMatch[1];
+      } else {
+        assert.fail(
+          "None or Invalid Project Description, but Description is defined."
+        );
+      }
+
+      i++;
+      continue;
+    }
+
+    // Project Build Folder
+    if (currentToken == "buildInto:") {
+      let tokenMatch = nextToken.match(/"([^"]+)"/);
+
+      if (tokenMatch) {
+        projectData.buildFolder = tokenMatch[1];
+      } else {
+        assert.fail("None or Invalid Build Folder.");
+      }
+
+      i++;
+      continue;
+    }
+  }
+
+  return projectData;
 }
 
 export function CompileProjectFile(filePath) {
   let rawProjectFileText = getProjectFileText(filePath);
   let projectFileText = processProjectFileText(rawProjectFileText);
   let projectFileWords = getProjectFileWords(projectFileText);
+  let projectData = parseProjectTokens(projectFileWords);
 
-  projectFileWords.forEach((word) => {
-    console.log(word);
-  });
+  console.log(projectData);
 }

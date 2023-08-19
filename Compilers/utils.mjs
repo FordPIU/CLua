@@ -25,6 +25,8 @@ export function readFile(filePath) {
  *
  * @author Caleb B.
  * @since 0.5.0
+ * @deprecated This functionality has been deprecated and will be removed in a future version.
+ * @see {@link splitWordsNotInString}
  *
  * @param {string} textString The string that will be split into words.
  * @returns {string|null} The array of words, or null should an error occur.
@@ -36,6 +38,36 @@ export function splitWords(textString) {
       .split(" ")
       .filter((word) => word.trim() !== "");
     return textWords;
+  } catch (error) {
+    return;
+  }
+}
+
+/**
+ * Splits the string by spaces (That aren't within a string), into a array of words.
+ * Will also filter out empty words.
+ *
+ * @author Caleb B.
+ * @since 0.5.1
+ *
+ * Updated in 0.5.1 to not split words that are within strings.
+ *
+ * @param {string} textString The string that will be split into words.
+ * @returns {string|null} The array of words, or null should an error occur.
+ */
+export function splitWordsNotInString(textString) {
+  try {
+    const wordRegex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
+    const textWords = textString.match(wordRegex);
+
+    if (textWords) {
+      const filteredWords = textWords.filter(
+        (word) => word && word.trim() !== ""
+      );
+      return filteredWords;
+    }
+
+    return;
   } catch (error) {
     return;
   }
