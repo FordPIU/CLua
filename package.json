@@ -15,7 +15,6 @@
     "url": "git+https://github.com/FordPIU/CLua.git"
   },
   "author": "Caleb Brodock",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/FordPIU/CLua/issues"
   },
