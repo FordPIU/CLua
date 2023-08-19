@@ -143,3 +143,7 @@ template addFunction(name, param)
 end
 
 addFunction(addThree, 3)
+
+// This is a area reserved for the testing of regex
+let commentInString = "Hello //World"
+let commentInString2 = "/* hello world! */"

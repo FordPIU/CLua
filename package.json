@@ -1,5 +1,23 @@
 {
   "dependencies": {
     "chalk": "^5.3.0"
-  }
+  },
+  "name": "clua",
+  "description": "This project contains confidential and proprietary information that is protected by copyright law. It is intended for authorized personnel only. If you have not signed a Non-Disclosure Agreement (NDA) with the project owner (Caleb Brodock), you are not permitted to access or view the contents of this project.",
+  "version": "0.5.0",
+  "main": "text.mjs",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FordPIU/CLua.git"
+  },
+  "author": "Caleb Brodock",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FordPIU/CLua/issues"
+  },
+  "homepage": "https://github.com/FordPIU/CLua#readme"
 }

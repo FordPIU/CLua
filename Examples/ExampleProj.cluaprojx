@@ -1,8 +1,8 @@
-!CustomVersioning
+!CustomVersioning // Request a plugin
 
 project "MyCLuaProject"
     metadata:
-        version: @v
+        version: @CustomVersioning // Return value of the plugin is inserted here
         description: "A sample CLua project built with cluaprojx"
         buildInto: "build"
 
