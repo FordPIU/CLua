@@ -4,7 +4,7 @@
   },
   "name": "clua",
   "description": "This project contains confidential and proprietary information that is protected by copyright law. It is intended for authorized personnel only. If you have not signed a Non-Disclosure Agreement (NDA) with the project owner (Caleb Brodock), you are not permitted to access or view the contents of this project.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "main": "text.mjs",
   "devDependencies": {},
   "scripts": {

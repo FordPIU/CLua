@@ -13,6 +13,17 @@
 import assert from "assert";
 import { readFile, removeComments, splitWordsNotInString } from "./utils.mjs";
 
+const SectionMappings = {
+  "metadata:": "metadata",
+  "features:": "features",
+  "extensions:": "extensions",
+  "environment:": "environment",
+  "assets:": "assets",
+  "clientFiles:": "clientFiles",
+  "serverFiles:": "serverFiles",
+  "sharedFiles:": "sharedFiles",
+};
+
 /* 
   Next Generation of Project Compiler is going to use a Line by Line & Regex processor.
   Note to self: good idea to add custom error handler. Assert kinda sucks.
@@ -75,6 +86,7 @@ function processProjectFileText(rawProjectFileText) {
  * @private
  * @since 0.5.0
  *
+ * @deprecated
  * @see {@link processProjectFileText}
  *
  * @param {string} projectFileText The processed project file text to tokenize.
@@ -91,6 +103,19 @@ function getProjectFileWords(projectFileText) {
   return words;
 }
 
+/**
+ * Parses the projects tokens.
+ *
+ * @author Caleb B.
+ * @private
+ * @since 0.5.2
+ *
+ * @deprecated
+ * @see {@link getProjectFileWords}
+ *
+ * @param {array} projectTokens The tokens of the project file in a array.
+ * @returns {array} The Project Data in a array.
+ */
 function parseProjectTokens(projectTokens) {
   let projectData = {
     name: "",
@@ -98,7 +123,11 @@ function parseProjectTokens(projectTokens) {
     desc: "",
     buildFolder: "",
     plugins: [],
+    features: {
+      disabled: [],
+    },
   };
+  let currentSection = null;
 
   for (let i = 0; i < projectTokens.length; i++) {
     const currentToken = projectTokens[i];
@@ -175,6 +204,135 @@ function parseProjectTokens(projectTokens) {
       i++;
       continue;
     }
+
+    // Disabled CLua Features
+    if (currentToken == "disable:") {
+    }
+  }
+
+  return projectData;
+}
+
+/**
+ * Parses the project file.
+ *
+ * @author Caleb B.
+ * @private
+ * @since 0.5.2
+ *
+ * @see {@link processProjectFileText}
+ *
+ * @param {string} projectTokens The string of the text file.
+ * @returns {array} The Project Data in a array.
+ */
+function parseProjectFile(projectText) {
+  const projectLines = projectText.split("\n");
+  let projectData = {
+    metadata: {
+      name: "",
+      version: "",
+      desc: "",
+      buildFolder: "",
+    },
+    plugins: [],
+    features: {
+      disabled: [],
+    },
+  };
+  let currentSection = null;
+
+  for (let i = 0; i < projectLines.length; i++) {
+    const currentLine = projectLines[i];
+    const currentSpaceCount = currentLine.match(/^\s*/)[0].length;
+    const currentFirstWord = (currentLine.split(/^([^:]+)/)[1] || "").trim();
+
+    if (currentSpaceCount == 0) {
+      const sectionKey = SectionMappings[currentLine.trim()];
+
+      if (sectionKey) {
+        currentSection = sectionKey;
+      } else {
+        currentSection = null;
+
+        // Plugin Definition
+        if (currentLine[0] == "!") {
+          let token = currentLine.slice(1).trim();
+          projectData.plugins.push(token);
+        }
+      }
+
+      continue;
+    }
+
+    if (currentSection == "metadata") {
+      // Project Name
+      if (currentFirstWord == "name") {
+        let tokenMatch = currentLine.match(/"([^"]+)"/);
+
+        if (tokenMatch) {
+          projectData.metadata.name = tokenMatch[1];
+        } else {
+          assert.fail("None or Invalid Project Name.");
+        }
+
+        continue;
+      }
+
+      // Project Version
+      if (currentFirstWord == "version") {
+        let definedTokenMatch = currentLine.match(/"([^"]+)"/);
+        let pluginTokenMatch = currentLine.match(/@(\w+)/);
+
+        if (definedTokenMatch || pluginTokenMatch) {
+          // Defined Version
+          if (definedTokenMatch) {
+            projectData.metadata.version = definedTokenMatch[1];
+          } else {
+            // Plugin Version
+            projectData.metadata.version =
+              "PLUGIN_RETURN_" + pluginTokenMatch[1];
+          }
+        } else {
+          assert.fail("None or Invalid Project Name.");
+        }
+
+        continue;
+      }
+
+      // Project Description
+      if (currentFirstWord == "description") {
+        let tokenMatch = currentLine.match(/"([^"]+)"/);
+
+        if (tokenMatch) {
+          projectData.metadata.desc = tokenMatch[1];
+        } else {
+          assert.fail(
+            "None or Invalid Project Description, but Description is defined."
+          );
+        }
+
+        continue;
+      }
+
+      // Project Build Folder
+      if (currentFirstWord == "buildInto") {
+        let tokenMatch = currentLine.match(/"([^"]+)"/);
+
+        if (tokenMatch) {
+          projectData.metadata.buildFolder = tokenMatch[1];
+        } else {
+          assert.fail("None or Invalid Build Folder.");
+        }
+
+        continue;
+      }
+    }
+
+    if (currentSection == "features") {
+      // Disabled CLua Features
+      if (currentFirstWord == "disable") {
+      }
+    }
   }
 
   return projectData;
@@ -183,8 +341,9 @@ function parseProjectTokens(projectTokens) {
 export function CompileProjectFile(filePath) {
   let rawProjectFileText = getProjectFileText(filePath);
   let projectFileText = processProjectFileText(rawProjectFileText);
-  let projectFileWords = getProjectFileWords(projectFileText);
-  let projectData = parseProjectTokens(projectFileWords);
+  let projectData = parseProjectFile(projectFileText);
+  // let projectFileWords = getProjectFileWords(projectFileText);
+  // let projectData = parseProjectTokens(projectFileWords);
 
   console.log(projectData);
 }
